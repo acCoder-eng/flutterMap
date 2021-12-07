@@ -1,0 +1,198 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+void main() => runApp(MyApp());
+
+class MyApp extends StatelessWidget {
+  // This widget is the root of your application.
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Flutter Demo',
+      theme: ThemeData(
+        primarySwatch: Colors.red,
+      ),
+      home: MyHomePage(title: 'Flutter Grid'),
+    );
+  }
+}
+
+class MyHomePage extends StatefulWidget {
+  MyHomePage({Key? key, required this.title}) : super(key: key);
+  final String title;
+
+  @override
+  _MyHomePageState createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  GlobalKey gridKey = GlobalKey();
+
+  var gridState = [
+    ["", "", "", "", "", "", "", ""],
+    ["", "", "", "", "", "", "", ""],
+    ["", "", "", "", "", "", "", ""],
+    ["", "", "", "", "", "", "", ""],
+    ["", "", "", "", "", "", "", ""],
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    SystemChrome.setPreferredOrientations([
+      //DeviceOrientation.landscapeRight,
+      //DeviceOrientation.landscapeLeft,
+    ]);
+  }
+
+  Widget _buildBody() {
+    int gridStateLength = gridState.length;
+    return Column(children: <Widget>[
+      AspectRatio(
+        aspectRatio: 1.0,
+        child: Container(
+          child: GridView.builder(
+            primary: false,
+            key: gridKey,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: gridStateLength,
+              //childAspectRatio: 8.0 / 11.9
+            ),
+            itemBuilder: _buildGridItems,
+            itemCount: gridStateLength * gridStateLength,
+          ),
+        ),
+      ),
+    ]);
+  }
+
+  Widget _buildGridItems(BuildContext context, int index) {
+    int gridStateLength = gridState.length;
+    int x, y = 0;
+    x = (index / gridStateLength).floor();
+    y = (index % gridStateLength);
+    GlobalKey gridItemKey = GlobalKey();
+
+    return GestureDetector(
+      onPanUpdate: (details) {
+        RenderBox _boxItem =
+            gridItemKey.currentContext!.findRenderObject() as RenderBox;
+        RenderBox _boxMainGrid =
+            gridKey.currentContext!.findRenderObject() as RenderBox;
+        Offset position =
+            _boxMainGrid.localToGlobal(Offset.zero); //this is global position
+        double gridLeft = position.dx;
+        double gridTop = position.dy;
+
+        double gridPosition = details.globalPosition.dy - gridTop;
+
+        //Get item position
+        int rowIndex = (gridPosition / _boxItem.size.width).floor().toInt();
+        int colIndex =
+            ((details.globalPosition.dx - gridLeft) / _boxItem.size.width)
+                .floor()
+                .toInt();
+        gridState[rowIndex][colIndex] = "Y";
+
+        setState(() {});
+      },
+      child: GridTile(
+        key: gridItemKey,
+        child: Container(
+          decoration: BoxDecoration(
+              border: Border.all(color: Colors.black, width: 0.5)),
+          child: Center(
+            child: _buildGridItem(x, y),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGridItem(int x, int y) {
+    switch (gridState[x][y]) {
+      case '':
+        return Text('');
+        break;
+      case 'Y':
+        return Container(
+          color: Colors.green,
+        );
+        break;
+      case 'N':
+        return Container(
+          color: Colors.white,
+        );
+        break;
+      default:
+        return Text(gridState[x][y].toString());
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.title),
+      ),
+      // ignore: avoid_unnecessary_containers
+      body: Container(
+        child: Column(
+          children: <Widget>[
+            _buildBody(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    // ignore: deprecated_member_use
+                    child: FlatButton(
+                      child: const Text(
+                        'Load',
+                        style: TextStyle(fontSize: 20.0),
+                      ),
+                      color: Colors.blueAccent,
+                      textColor: Colors.white,
+                      onPressed: () {},
+                    ),
+                  ),
+                ),
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    // ignore: deprecated_member_use
+                    child: FlatButton(
+                      child: const Text(
+                        'Clear',
+                        style: TextStyle(fontSize: 20.0),
+                      ),
+                      color: Colors.blueAccent,
+                      textColor: Colors.white,
+                      onPressed: () {
+                        liste();
+                      },
+                    ),
+                  ),
+                )
+              ],
+            ),
+          ],
+        ),
+      ),
+      // This trailing comma makes auto-formatting nicer for build methods.
+    );
+  }
+
+  liste() {
+    for (int i = 0; i < gridState.length; i++) {
+      for (int j = 0; j < gridState.length; j++) {
+        if (gridState[i][j] == "Y") {
+          setState(() {
+            gridState[i][j] = "";
+          });
+        }
+      }
+    }
+  }
+}
